@@ -50,12 +50,19 @@ class Car(Agent):
         Front_pos=(self.Directions[self.vision][0]+Actual_pos[0],self.Directions[self.vision][1]+Actual_pos[1])
         if self.model.grid.get_cell_list_contents(Front_pos):
             for place in self.model.grid.get_cell_list_contents(Front_pos):
-                if isinstance(place, Road):
+                if isinstance(place, Road) and place.direction==self.vision:
                     if self.can_move(self,place):
                         self.model.grid.move_agent(self, place.pos)
-                        break
+                
+                elif isinstance(place, Road) and place.direction!=self.vision:
+                    self.change_direction(place)
+                    break
         
-                   
+    def change_direction(self,next_pos):
+        self.model.grid.move_agent(self, next_pos.pos)
+        self.vision=next_pos.direction
+        
+        
     def check_vision(self):
         Actual_pos=self.pos
         Front_pos=(self.Directions[self.vision][0]+Actual_pos[0],self.Directions[self.vision][1]+Actual_pos[1])
