@@ -17,9 +17,10 @@ class CityModel(Model):
         dataDictionary = json.load(open("city_files/mapDictionary.json"))
 
         self.traffic_lights = []
+        self.Destinations_list = []
 
         # Load the map file. The map file is a text file where each character represents an agent.
-        with open('city_files/2022_base.txt') as baseFile:
+        with open('city_files/City_base.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0])-1
             self.height = len(lines)
@@ -30,10 +31,14 @@ class CityModel(Model):
             # Goes through each character in the map file and creates the corresponding agent.
             for r, row in enumerate(lines):
                 for c, col in enumerate(row):
-                    if col in ["v", "^", ">", "<","=","*"]:
-                        agent = Road(f"r_{r*self.width+c}", self, dataDictionary[col])
+                    if col in ["v", "^", ">", "<","="]:
+                        agent = Road(f"r_{r*self.width+c}", self, dataDictionary[col], "straight")
                         self.grid.place_agent(agent, (c, self.height - r - 1))
 
+                    elif col in ["L", "l", "R", "r"]:
+                        agent = Road(f"r_{r*self.width+c}", self, dataDictionary[col], "intersection")
+                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                    
                     elif col in ["S", "s"]:
                         agent = Traffic_Light(f"tl_{r*self.width+c}", self, False if col == "S" else True, int(dataDictionary[col]))
                         self.grid.place_agent(agent, (c, self.height - r - 1))
@@ -47,13 +52,21 @@ class CityModel(Model):
                     elif col == "D":
                         agent = Destination(f"d_{r*self.width+c}", self)
                         self.grid.place_agent(agent, (c, self.height - r - 1))
-
-        agentCar=Car(124234,self)
-        self.grid.place_agent(agentCar,(0,0))
-        self.schedule.add(agentCar)
+                        self.Destinations_list.append((c, self.height - r - 1))
+                        
+        poosibleSpawns = [(0, 0), (0, self.height-1), (self.width-1, 0), (self.width-1, self.height-1)]
+        
+        for i in range(4):
+            location = self.random.choice(poosibleSpawns) 
+            direction = self.grid.get_cell_list_contents(location)[0].direction  
+            agentCar = Car(f"c_{i}", self, self.random.choice(self.Destinations_list), direction)
+            self.grid.place_agent(agentCar, location)
+            self.schedule.add(agentCar)
+        
         self.num_agents = N
         self.running = True
 
     def step(self):
         '''Advance the model by one step.'''
+        
         self.schedule.step()
