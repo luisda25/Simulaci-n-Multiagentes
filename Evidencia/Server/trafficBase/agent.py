@@ -21,7 +21,8 @@ class Car(Agent):
         self.Directions= json.load(open("city_files/directions.json"))
         self.vision=vision
         self.state="Straight"
-        self.Destination="a"
+        self.Destination=Destination
+        self.Destination_pos=None
         self.map= json.load(open("city_files/Node_directions.json"))
         
     def can_move(self,celda_actual,Posible_celda):
@@ -120,7 +121,7 @@ class Car(Agent):
             
             for place in self.model.grid.get_cell_list_contents(pos):
                 if isinstance(place, Destination) and place.identifier==self.Destination:
-                    self.model.grid.move_agent(self, place.pos)
+                    
                     self.state="In Destination"
                     break
 
@@ -178,22 +179,45 @@ class Car(Agent):
         if len(self.model.grid.get_cell_list_contents(Front_pos))==1:
             self.state="Straight"
 
+    def Enter_destination(self):
+        for neighbor in self.model.grid.iter_neighbors(self.pos, moore=True, include_center=False):
+            if isinstance(neighbor, Destination):
+                if neighbor.identifier=="$":
+                    self.model.grid.move_agent(self, neighbor.pos)
+                    self.state="Final"
+                    break
+                
+                elif neighbor.identifier==self.Destination:
+                    
+                    self.model.grid.move_agent(self, neighbor.pos)
+                    break
+
     def step(self):
         self.check_three()
         if self.state!="In Destination":
             self.check_vision()
         
-        if self.state=="Straight":
+        if self.state=="In Destination":
+            self.Enter_destination()
+        elif self.state=="Straight":
             self.move_straight()
+            return
         elif self.state=="Intersection":
             self.Intersection()
+            return
         elif self.state=="Stop":
             self.check_clear()
+            return
+        elif self.state=="Final":
+            self.model.schedule.remove(self)
+            self.model.grid.remove_agent(self)
+            return
         elif self.state=="In Destination":
-            pass
+            self.Enter_destination()
+            return
         else:
             self.move()
-
+            return
 class Traffic_Light(Agent):
     """
     Traffic light. Where the traffic lights are in the grid.
