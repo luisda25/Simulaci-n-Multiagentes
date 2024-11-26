@@ -67,9 +67,7 @@ let frameCount = 0;
 
 // Define the data object
 const data = {
-  NAgents: 1,
-  width: 24,
-  height: 25
+  NAgents: 1
 };
 
 // Main function to initialize and run the application

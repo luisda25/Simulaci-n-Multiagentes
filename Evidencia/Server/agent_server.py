@@ -9,8 +9,6 @@ from trafficBase.agent import Car, Traffic_Light, Destination, Obstacle, Road
 
 # Size of the board:
 number_cars = 10
-width = 25
-height = 25
 cityModel = None
 currentStep = 0
 
@@ -29,15 +27,13 @@ def initModel():
         try:
 
             number_cars = int(request.json.get('NAgents'))
-            width = int(request.json.get('width'))
-            height = int(request.json.get('height'))
             currentStep = 0
 
             print(request.json)
-            print(f"Model parameters:{number_cars, width, height}")
+            print(f"Model parameters:{number_cars}")
 
             # Create the model using the parameters sent by the application
-            cityModel = CityModel(number_cars, width, height)
+            cityModel = CityModel(number_cars)
 
             # Return a message to saying that the model was created successfully
             return jsonify({"message":"Parameters recieved, model initiated."})
