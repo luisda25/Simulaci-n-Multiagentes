@@ -18,11 +18,12 @@ class CityModel(Model):
 
         self.traffic_lights = []
         self.Destinations_list = []
+        self.step_counter = 0
         
         # Load the map file. The map file is a text file where each character represents an agent.
         with open('city_files/City_base.txt') as baseFile:
             lines = baseFile.readlines()
-            self.width = len(lines[0])
+            self.width = len(lines[0])-1
             self.height = len(lines)
             self.Nodes=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
             self.destinations_nodes=["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
@@ -58,21 +59,27 @@ class CityModel(Model):
                     elif col in self.destinations_nodes:
                         agent = Destination(f"d_{r*self.width+c}", self, "Road_destination", col)
                         self.grid.place_agent(agent, (c, self.height - r - 1))
-                        self.Destinations_list.append(col)    
-                        
-        poosibleSpawns = [(0, 0), (0, self.height-1), (self.width-1, 0), (self.width-1, self.height-1)]
+                        self.Destinations_list.append(col) 
+          
+        self.running = True                 
         
-        for i in range(1):
-            location = poosibleSpawns[0] 
+        
+    def spawn_cars(self):  
+        poosibleSpawns = [(0, 0), (0, self.height-1), (self.width-1, 0), (self.width-1, self.height-1)]  
+        for i in range(4):
+            location =poosibleSpawns[i]
             direction = self.grid.get_cell_list_contents(location)[0].direction  
             agentCar = Car(f"c_{i}", self, self.random.choice(self.Destinations_list), direction)
             self.grid.place_agent(agentCar, location)
             self.schedule.add(agentCar)
         
-        self.num_agents = N
-        self.running = True
+        
+        
 
     def step(self):
         '''Advance the model by one step.'''
+        if self.step_counter % 10 == 0:
+            self.spawn_cars()
         
         self.schedule.step()
+        self.step_counter += 1
