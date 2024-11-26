@@ -28,7 +28,7 @@ def initModel():
     if request.method == 'POST':
         try:
 
-            number_cars = int(request.json.get('NCars'))
+            number_cars = int(request.json.get('NAgents'))
             width = int(request.json.get('width'))
             height = int(request.json.get('height'))
             currentStep = 0

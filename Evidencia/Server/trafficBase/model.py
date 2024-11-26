@@ -11,7 +11,7 @@ class CityModel(Model):
         Args:
             N: Number of agents in the simulation
     """
-    def __init__(self, N):
+    def __init__(self, N, width, height):
 
         # Load the map dictionary. The dictionary maps the characters in the map file to the corresponding agent.
         dataDictionary = json.load(open("city_files/mapDictionary.json"))
@@ -22,45 +22,43 @@ class CityModel(Model):
         # Load the map file. The map file is a text file where each character represents an agent.
         with open('city_files/City_base.txt') as baseFile:
             lines = baseFile.readlines()
-            self.width = len(lines[0])
-            self.height = len(lines)
             self.Nodes=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
             self.destinations_nodes=["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
-            self.grid = MultiGrid(self.width, self.height, torus = False) 
+            self.grid = MultiGrid(width, height, torus = False) 
             self.schedule = RandomActivation(self)
 
             # Goes through each character in the map file and creates the corresponding agent.
             for r, row in enumerate(lines):
                 for c, col in enumerate(row):
                     if col in ["v", "^", ">", "<","="]:
-                        agent = Road(f"r_{r*self.width+c}", self, dataDictionary[col], "straight")
-                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                        agent = Road(f"r_{r * width + c}", self, dataDictionary[col], "straight")
+                        self.grid.place_agent(agent, (c, height - r - 1))
 
                     elif col in self.Nodes:
                         
-                        agent = Road(f"r_{r*self.width+c}", self, col, "intersection")
-                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                        agent = Road(f"r_{r * width+c}", self, col, "intersection")
+                        self.grid.place_agent(agent, (c, height - r - 1))
                     
                     elif col in ["S", "s"]:
-                        agent = Traffic_Light(f"tl_{r*self.width+c}", self, False if col == "S" else True, int(dataDictionary[col]))
-                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                        agent = Traffic_Light(f"tl_{r * width + c}", self, False if col == "S" else True, int(dataDictionary[col]))
+                        self.grid.place_agent(agent, (c, height - r - 1))
                         self.schedule.add(agent)
                         self.traffic_lights.append(agent)
 
                     elif col == "#":
-                        agent = Obstacle(f"ob_{r*self.width+c}", self)
-                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                        agent = Obstacle(f"ob_{r * width + c}", self)
+                        self.grid.place_agent(agent, (c, height - r - 1))
 
                     elif col == "$":
-                        agent = Destination(f"d_{r*self.width+c}", self, "Inner_destination", col)
-                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                        agent = Destination(f"d_{r * width+c}", self, "Inner_destination", col)
+                        self.grid.place_agent(agent, (c, height - r - 1))
                     
                     elif col in self.destinations_nodes:
-                        agent = Destination(f"d_{r*self.width+c}", self, "Road_destination", col)
-                        self.grid.place_agent(agent, (c, self.height - r - 1))
+                        agent = Destination(f"d_{r * width + c}", self, "Road_destination", col)
+                        self.grid.place_agent(agent, (c, height - r - 1))
                         self.Destinations_list.append(col)    
                         
-        poosibleSpawns = [(0, 0), (0, self.height-1), (self.width-1, 0), (self.width-1, self.height-1)]
+        poosibleSpawns = [(0, 0), (0, height-1), (width-1, 0), (width-1, height-1)]
         
         for i in range(1):
             location = poosibleSpawns[0] 
