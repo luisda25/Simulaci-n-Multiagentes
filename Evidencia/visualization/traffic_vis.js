@@ -3,7 +3,7 @@
 import * as twgl from 'twgl.js';
 import GUI from 'lil-gui';
 
-// Define the vertex shader code, using GLSL 3.00
+// Import the vertex shader code, using GLSL 3.00
 const vsGLSL = `#version 300 es
 in vec4 a_position;
 in vec4 a_color;
@@ -47,11 +47,11 @@ class Object3D {
 const agent_server_uri = "http://localhost:8585/";
 
 // Initialize arrays to store agents and obstacles
-const agents = [];
+const cars = [];   
 const obstacles = [];
 
 // Initialize WebGL-related variables
-let gl, programInfo, agentArrays, obstacleArrays, agentsBufferInfo, obstaclesBufferInfo, agentsVao, obstaclesVao;
+let gl, programInfo, carsArrays, obstacleArrays, carsBufferInfo, obstaclesBufferInfo, carsVao, obstaclesVao;
 
 // Define the camera position
 let cameraPosition = {x:0, y:9, z:9};
@@ -61,9 +61,9 @@ let frameCount = 0;
 
 // Define the data object
 const data = {
-  NAgents: 500,
-  width: 100,
-  height: 100
+  NAgents: 1,
+  width: 25,
+  height: 25
 };
 
 // Main function to initialize and run the application
@@ -75,15 +75,15 @@ async function main() {
   programInfo = twgl.createProgramInfo(gl, [vsGLSL, fsGLSL]);
 
   // Generate the agent and obstacle data
-  agentArrays = generateData(1);
+  carsArrays = generateData(1);
   obstacleArrays = generateObstacleData(1);
 
   // Create buffer information from the agent and obstacle data
-  agentsBufferInfo = twgl.createBufferInfoFromArrays(gl, agentArrays);
+  carsBufferInfo = twgl.createBufferInfoFromArrays(gl, carsArrays);
   obstaclesBufferInfo = twgl.createBufferInfoFromArrays(gl, obstacleArrays);
 
   // Create vertex array objects (VAOs) from the buffer information
-  agentsVao = twgl.createVAOFromBufferInfo(gl, programInfo, agentsBufferInfo);
+  carsVao = twgl.createVAOFromBufferInfo(gl, programInfo, carsBufferInfo);
   obstaclesVao = twgl.createVAOFromBufferInfo(gl, programInfo, obstaclesBufferInfo);
 
   // Set up the user interface
@@ -97,7 +97,7 @@ async function main() {
   await getObstacles();
 
   // Draw the scene
-  await drawScene(gl, programInfo, agentsVao, agentsBufferInfo, obstaclesVao, obstaclesBufferInfo);
+  await drawScene(gl, programInfo, carsVao, carsBufferInfo, obstaclesVao, obstaclesBufferInfo);
 }
 
 /*
@@ -142,19 +142,19 @@ async function getAgents() {
       console.log(result.positions)
 
       // Check if the agents array is empty
-      if(agents.length == 0){
+      if(cars.length == 0){
         // Create new agents and add them to the agents array
         for (const agent of result.positions) {
           const newAgent = new Object3D(agent.id, [agent.x, agent.y, agent.z])
-          agents.push(newAgent)
+          cars.push(newAgent)
         }
         // Log the agents array
-        console.log("Agents:", agents)
+        console.log("Agents:", cars)
 
       } else {
         // Update the positions of existing agents
         for (const agent of result.positions) {
-          const current_agent = agents.find((object3d) => object3d.id == agent.id)
+          const current_agent = cars.find((object3d) => object3d.id == agent.id)
 
           // Check if the agent exists in the agents array
           if(current_agent != undefined){
@@ -285,7 +285,7 @@ function drawAgents(distance, agentsVao, agentsBufferInfo, viewProjectionMatrix)
     gl.bindVertexArray(agentsVao);
 
     // Iterate over the agents
-    for(const agent of agents){
+    for(const agent of cars){
 
       // Create the agent's transformation matrix
       const cube_trans = twgl.v3.create(...agent.position);
