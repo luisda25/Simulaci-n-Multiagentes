@@ -2,6 +2,8 @@
 
 import * as twgl from 'twgl.js';
 import GUI from 'lil-gui';
+import obj from '../visualization/coche.obj?raw';
+import { loadObj } from '../visualization/OBJ_reader.js';
 
 // Import the vertex shader code, using GLSL 3.00
 const vsGLSL = `#version 300 es
@@ -43,6 +45,21 @@ class Object3D {
   }
 }
 
+class Car {
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.12, 0.12 , 0.09], color = null){
+    this.id = id;
+    this.position = position;
+    this.rotation = rotation;
+    this.scale = scale;
+    this.color = color || this.getRandomColor();
+    this.matrix = twgl.m4.create();
+  }
+
+  getRandomColor() {
+    return [Math.random(), Math.random(), Math.random(), 1];
+  }
+}
+
 // Define the agent server URI
 const agent_server_uri = "http://localhost:8585/";
 
@@ -74,7 +91,7 @@ let gl,
   ;
 
 // Define the camera position
-let cameraPosition = {x:0, y:9, z:9};
+let cameraPosition = {x:0, y:40, z:0.01};
 
 // Initialize the frame count
 let frameCount = 0;
@@ -93,7 +110,7 @@ async function main() {
   programInfo = twgl.createProgramInfo(gl, [vsGLSL, fsGLSL]);
 
   // Generate the agent and obstacle data
-  carsArrays = generateData(1);
+  carsArrays = loadObj(obj);
   obstacleArrays = generateData(1);
   trafficLightsArrays = generateData(1);
   destinationsArrays = generateData(1);
@@ -176,7 +193,7 @@ async function getAgents() {
 
       // Create new agents and add them to the agents array
       for (const agent of result.positions) {
-        const newAgent = new Object3D(agent.id, [agent.x, agent.y, agent.z])
+        const newAgent = new Car(agent.id, [agent.x, agent.y, agent.z])
         cars.push(newAgent)
       }
       // Log the agents array
@@ -238,7 +255,7 @@ async function getTrafficLights() {
             i.id,
             [i.x, i.y, i.z],
             [0, 0, 0],
-            [1, 1, 1],
+            [0.5, 0.5, 0.5],
             i.state ? [0, 1, 0, 1] : [1, 0, 0, 1], // Green if true, red if false
           );
           traffic_lights.push(newLight);
@@ -300,14 +317,25 @@ async function getDestinations() {
       let result = await response.json();
 
       for (const d of result.positions) {
-        const newDestination = new Object3D(
-          d.id,
-          [d.x, d.y, d.z],
-          [0, 0, 0],
-          [1, 1, 1],
-          [0, 0, 1, 1],
-        );
-        destinations.push(newDestination);
+        if (d.type == "Inner_destination") {
+          const newDestination = new Object3D(
+            d.id,
+            [d.x, d.y, d.z],
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 0, 1, 1],
+          );
+          destinations.push(newDestination);
+        } else {
+          const newDestination = new Object3D(
+            d.id,
+            [d.x, d.y, d.z],
+            [0, 0, 0],
+            [1, 1, 1],
+            [0.5, 0.5, 0.5, 1],
+          );
+          destinations.push(newDestination);
+        }
       }
       console.log("Destinations:", destinations);
     }
@@ -341,12 +369,6 @@ async function update() {
 /*
  * Draws the scene by rendering the agents and obstacles.
  * 
- * @param {WebGLRenderingContext} gl - The WebGL rendering context.
- * @param {Object} programInfo - The program information.
- * @param {WebGLVertexArrayObject} agentsVao - The vertex array object for agents.
- * @param {Object} agentsBufferInfo - The buffer information for agents.
- * @param {WebGLVertexArrayObject} obstaclesVao - The vertex array object for obstacles.
- * @param {Object} obstaclesBufferInfo - The buffer information for obstacles.
  */
 async function drawScene() {
     // Resize the canvas to match the display size
