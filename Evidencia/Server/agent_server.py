@@ -151,7 +151,7 @@ def getDestinations():
         # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
         # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
             destinationPositions = [
-                {"id": str(a.unique_id), "x": x, "y": 0, "z": z}
+                {"id": str(a.unique_id), "x": x, "y": 0, "z": z, "type": a.type}
                 for cell, (x, z) in cityModel.grid.coord_iter()
                 for a in cell if isinstance(a, Destination)
             ]
