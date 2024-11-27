@@ -23,6 +23,7 @@ class Car(Agent):
         self.state="Straight"
         self.Destination=Destination
         self.Destination_pos=None
+        self.posible_moves=[]
         self.map= json.load(open("city_files/Node_directions.json"))
         
     def can_move(self,celda_actual,Posible_celda):
@@ -43,14 +44,7 @@ class Car(Agent):
                 return True
         
     
-    def move(self):
-        for place in self.model.grid.iter_neighbors(self.pos, moore=False, include_center=False):
-            print(place.pos)
-            if isinstance(place, Road):
-                print(place.direction)
-                if self.can_move(self,place):  
-                    self.model.grid.move_agent(self, place.pos)
-                    break
+    
     
     def search_path(self,Actual_node):
         queue = deque([(Actual_node, [])])  # Cola con tuplas (nodo actual, camino hasta aquí)
@@ -89,8 +83,7 @@ class Car(Agent):
             if isinstance(place, Road) and place.type=="intersection":
                 #aqui va a ir Calcular a* para saber a que direccion se va a mover
                 Nodes_path=self.search_path(place.direction)
-                print(self.Destination)
-                print(Nodes_path)
+                
                 self.vision=Nodes_path[0]
                 Actual_pos=self.pos
                 Front_pos=(self.Directions[self.vision][0]+Actual_pos[0],self.Directions[self.vision][1]+Actual_pos[1])
@@ -114,70 +107,50 @@ class Car(Agent):
 
 
         Front_row=[First_pos,Front_pos,Second_pos]
-        print(Front_row)
+        self.posible_moves=[]
+        
         for pos in Front_row:
             if pos[0]<0 or pos[0]>=self.model.width or pos[1]<0 or pos[1]>=self.model.height:
                 continue
             
             for place in self.model.grid.get_cell_list_contents(pos):
                 if isinstance(place, Destination) and place.identifier==self.Destination:
-                    
                     self.state="In Destination"
                     break
+                elif isinstance(place, Road) and len(self.model.grid.get_cell_list_contents(place.pos))==1:
+                    self.posible_moves.append(place)
+        
+        for front in self.model.grid.get_cell_list_contents(Front_pos):
+            if isinstance(front, Car):
+                self.state="Stop"
+                break
+            elif isinstance(front, Traffic_Light ):
+                if front.state==True:
+                    self.state="Straight"
+                else:
+                    self.state="Stop"
 
     def move_straight(self):
         Actual_pos=self.pos
         Front_pos=(self.Directions[self.vision][0]+Actual_pos[0],self.Directions[self.vision][1]+Actual_pos[1])
-        if self.model.grid.get_cell_list_contents(Front_pos):
-            for place in self.model.grid.get_cell_list_contents(Front_pos):
-                
-                
-                if isinstance(place, Road) and place.type=="intersection":
-                    self.model.grid.move_agent(self, place.pos)
-                    self.state="Intersection"
-                    break
-                
-                elif isinstance(place, Traffic_Light ) :
-                    self.model.grid.move_agent(self, place.pos)
-                    break
-                
-                elif isinstance(place, Road) and (place.direction==self.vision):
-                        self.model.grid.move_agent(self, place.pos)
-                        
-                
-                elif isinstance(place, Road) and place.direction!=self.vision:
-                    if self.can_move(self,place):
-                        self.change_direction(place)
-                        break
-                    
-                elif isinstance(place, Destination) and place.identifier!=self.Destination:
-                    self.model.grid.move_agent(self, place.pos)
-                    break
+        self.model.grid.move_agent(self, Front_pos)
         
     def change_direction(self,next_pos):
         self.model.grid.move_agent(self, next_pos.pos)
         self.vision=next_pos.direction
         
         
-    def check_vision(self):
-        Actual_pos=self.pos
-        Front_pos=(self.Directions[self.vision][0]+Actual_pos[0],self.Directions[self.vision][1]+Actual_pos[1])
-        
-        
-        for place in self.model.grid.get_cell_list_contents(Front_pos):
-            if isinstance(place, Traffic_Light ):
-                if place.state==True:
-                    self.state="Straight"
-                else:
-                    self.state="Stop"
-            elif isinstance(place, Car):
-                self.state="Stop"
+    
 
     def check_clear(self):
         Actual_pos=self.pos
         Front_pos=(self.Directions[self.vision][0]+Actual_pos[0],self.Directions[self.vision][1]+Actual_pos[1])
         if len(self.model.grid.get_cell_list_contents(Front_pos))==1:
             self.state="Straight"
+        elif self.posible_moves:
+            if len(self.model.grid.get_cell_list_contents(self.posible_moves[0].pos))==1:
+                self.model.grid.move_agent(self, self.posible_moves[0].pos)
+            
 
     def Enter_destination(self):
         for neighbor in self.model.grid.iter_neighbors(self.pos, moore=True, include_center=False):
@@ -192,10 +165,28 @@ class Car(Agent):
                     self.model.grid.move_agent(self, neighbor.pos)
                     break
 
+    def check_actual(self):
+        for place in self.model.grid.get_cell_list_contents(self.pos):
+            if isinstance(place, Road) and place.type=="intersection":
+                    self.model.grid.move_agent(self, place.pos)
+                    self.state="Intersection"
+                    break
+            
+            elif isinstance(place, Road) and (place.direction==self.vision):
+                    self.state="Straight"
+                    break
+                    
+            elif isinstance(place, Road) and place.direction!=self.vision:
+                if self.can_move(self,place):
+                    self.vision=place.direction
+                    break
+                
+
+
     def step(self):
+        self.check_actual()
         self.check_three()
-        if self.state!="In Destination":
-            self.check_vision()
+        print(self.vision)
         
         if self.state=="In Destination":
             self.Enter_destination()
@@ -215,9 +206,7 @@ class Car(Agent):
         elif self.state=="In Destination":
             self.Enter_destination()
             return
-        else:
-            self.move()
-            return
+        
 class Traffic_Light(Agent):
     """
     Traffic light. Where the traffic lights are in the grid.
