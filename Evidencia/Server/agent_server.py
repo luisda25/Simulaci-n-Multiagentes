@@ -56,16 +56,15 @@ def getAgents():
         # Note that the positions are sent as a list of dictionaries, where each dictionary has the id and position of an agent.
         # The y coordinate is set to 1, since the agents are in a 3D world. The z coordinate corresponds to the row (y coordinate) of the grid in mesa.
         try:
-            agentPositions = [
+            carPositions = [
                 {"id": str(a.unique_id), "x": a.pos[0], "y":1, "z":a.pos[1]}
-                for a in cityModel.schedule.agents()
-                if isinstance(a, Car)
+                for a in cityModel.schedule.agents if isinstance(a, Car)
             ]
 
-            return jsonify({'positions':agentPositions})
+            return jsonify({'positions': carPositions})
         except Exception as e:
             print(e)
-            return jsonify({"message":"Error with the agent positions"}), 500
+            return jsonify({"message":"Error with the car positions"}), 500
 
 # This route will be used to get the positions of the obstacles
 @app.route('/getObstacles', methods=['GET'])
@@ -86,11 +85,82 @@ def getObstacles():
                 for a in cell if isinstance(a, Obstacle)
             ]
 
-            return jsonify({'positions':carPositions})
+            return jsonify({'positions': carPositions})
         except Exception as e:
             print(e)
             return jsonify({"message":"Error with obstacle positions"}), 500
 
+
+@app.route('/getTrafficLights', methods=['GET'])
+@cross_origin()
+def getTrafficLights():
+    global cityModel
+
+    if cityModel is None:
+        return jsonify({"message":"Model not initialized."}), 500
+    
+    if request.method == 'GET':
+        try:
+        # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
+        # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
+            trafficLigthPositions = [
+                {"id": str(a.unique_id), "x": x, "y": 2, "z": z, "state": a.state}
+                for cell, (x, z) in cityModel.grid.coord_iter()
+                for a in cell if isinstance(a, Traffic_Light)
+            ]
+
+            return jsonify({'positions': trafficLigthPositions})
+        except Exception as e:
+            print(e)
+            return jsonify({"message":"Error with traffic light positions"}), 500
+        
+@app.route('/getRoads', methods=['GET'])
+@cross_origin()
+def getRoads():
+    global cityModel
+    
+    if cityModel is None:
+        return jsonify({"message":"Model not initialized."}), 500
+    
+    if request.method == 'GET':
+        try:
+        # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
+        # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
+            roadPositions = [
+                {"id": str(a.unique_id), "x": x, "y": 0, "z": z}
+                for cell, (x, z) in cityModel.grid.coord_iter()
+                for a in cell if isinstance(a, Road)
+            ]
+
+            return jsonify({'positions': roadPositions})
+        except Exception as e:
+            print(e)
+            return jsonify({"message":"Error with road positions"}), 500
+        
+        
+@app.route('/getDestinations', methods=['GET'])
+@cross_origin()
+def getDestinations():
+    global cityModel
+    
+    if cityModel is None:
+        return jsonify({"message":"Model not initialized."}), 500
+    
+    if request.method == 'GET':
+        try:
+        # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
+        # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
+            destinationPositions = [
+                {"id": str(a.unique_id), "x": x, "y": 0, "z": z}
+                for cell, (x, z) in cityModel.grid.coord_iter()
+                for a in cell if isinstance(a, Destination)
+            ]
+
+            return jsonify({'positions': destinationPositions})
+        except Exception as e:
+            print(e)
+            return jsonify({"message":"Error with destination positions"}), 500 
+        
 # This route will be used to update the model
 @app.route('/update', methods=['GET'])
 @cross_origin()
