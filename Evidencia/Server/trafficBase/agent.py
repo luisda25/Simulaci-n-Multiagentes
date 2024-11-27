@@ -22,7 +22,7 @@ class Car(Agent):
         self.vision=vision
         self.state="Straight"
         self.Destination=Destination
-        self.Destination_pos=None
+        self.Destination_pos=False
         self.posible_moves=[]
         self.map= json.load(open("city_files/Node_directions.json"))
         
@@ -155,15 +155,18 @@ class Car(Agent):
     def Enter_destination(self):
         for neighbor in self.model.grid.iter_neighbors(self.pos, moore=True, include_center=False):
             if isinstance(neighbor, Destination):
-                if neighbor.identifier=="$":
-                    self.model.grid.move_agent(self, neighbor.pos)
-                    self.state="Final"
-                    break
-                
-                elif neighbor.identifier==self.Destination:
+                if len(self.model.grid.get_cell_list_contents(neighbor.pos))==1:
                     
-                    self.model.grid.move_agent(self, neighbor.pos)
-                    break
+                    if neighbor.identifier=="$" and self.Destination_pos==True:
+                        self.model.grid.move_agent(self, neighbor.pos)
+                        self.state="Final"
+                        break
+                    
+                    elif neighbor.identifier==self.Destination:
+                        
+                        self.model.grid.move_agent(self, neighbor.pos)
+                        self.Destination_pos=True
+                        break
 
     def check_actual(self):
         for place in self.model.grid.get_cell_list_contents(self.pos):
@@ -172,7 +175,7 @@ class Car(Agent):
                     self.state="Intersection"
                     break
             
-            elif isinstance(place, Road) and (place.direction==self.vision):
+            elif isinstance(place, Road) and ((place.direction==self.vision) or (place.direction=="Same")):
                     self.state="Straight"
                     break
                     
