@@ -21,19 +21,19 @@ class CityModel(Model):
         self.step_counter = 0
         
         # Load the map file. The map file is a text file where each character represents an agent.
-        with open('city_files/City_base.txt') as baseFile:
+        with open('city_files/Mapa_Final.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0])-1
             self.height = len(lines)
-            self.Nodes=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
-            self.destinations_nodes=["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
+            self.Nodes=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L","M","N","Ñ","O","P","Q","R","T","U","W","X","Y","Z","&","!","¡"]
+            self.destinations_nodes=["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l","m","n","ñ","o","p","q","r","t","u","w","x","y","z"]
             self.grid = MultiGrid(self.width, self.height, torus = False) 
             self.schedule = RandomActivation(self)
 
             # Goes through each character in the map file and creates the corresponding agent.
             for r, row in enumerate(lines):
                 for c, col in enumerate(row):
-                    if col in ["v", "^", ">", "<","="]:
+                    if col in ["V", "^", ">", "<","="]:
                         agent = Road(f"r_{r*self.width+c}", self, dataDictionary[col], "straight")
                         self.grid.place_agent(agent, (c, self.height - r - 1))
 
