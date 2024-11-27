@@ -18,8 +18,12 @@ def agent_portrayal(agent):
         portrayal["Layer"] = 0
     
     if (isinstance(agent, Destination)):
-        portrayal["Color"] = "lightgreen"
-        portrayal["Layer"] = 0
+        if agent.type=="Road_destination":
+            portrayal["Color"] = "grey"
+            portrayal["Layer"] = 0
+        else:
+            portrayal["Color"] = "lightgreen"
+            portrayal["Layer"] = 0
 
     if (isinstance(agent, Traffic_Light)):
         portrayal["Color"] = "red" if not agent.state else "green"
@@ -44,7 +48,7 @@ def agent_portrayal(agent):
 width = 0
 height = 0
 
-with open('city_files/2022_base.txt') as baseFile:
+with open('city_files/City_base.txt') as baseFile:
     lines = baseFile.readlines()
     width = len(lines[0])-1
     height = len(lines)
