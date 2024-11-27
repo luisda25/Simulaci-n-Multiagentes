@@ -119,16 +119,18 @@ class Car(Agent):
                     break
                 elif isinstance(place, Road) and len(self.model.grid.get_cell_list_contents(place.pos))==1:
                     self.posible_moves.append(place)
-        
+                    
+       
         for front in self.model.grid.get_cell_list_contents(Front_pos):
             if isinstance(front, Car):
                 self.state="Stop"
                 break
             elif isinstance(front, Traffic_Light ):
-                if front.state==True:
-                    self.state="Straight"
-                else:
-                    self.state="Stop"
+                if self.state!="In Destination":
+                    if front.state==True:
+                        self.state="Straight"
+                    else:
+                        self.state="Stop"
 
     def move_straight(self):
         Actual_pos=self.pos
@@ -189,10 +191,10 @@ class Car(Agent):
     def step(self):
         self.check_actual()
         self.check_three()
-        print(self.vision)
         
         if self.state=="In Destination":
             self.Enter_destination()
+            return
         elif self.state=="Straight":
             self.move_straight()
             return
