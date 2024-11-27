@@ -46,7 +46,7 @@ class Object3D {
 }
 
 class Car {
-  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.12, 0.12 , 0.09], color = null){
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.12, 0.12 , 0.09], color = [0.5, 0, 0.5, 1]){
     this.id = id;
     this.position = position;
     this.rotation = rotation;
