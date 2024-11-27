@@ -6,32 +6,30 @@ import obj from '../visualization/coche.obj?raw';
 import { loadObj } from '../visualization/OBJ_reader.js';
 
 // Import the vertex shader code, using GLSL 3.00
-const vsGLSL = `#version 300 es
-in vec4 a_position;
+import vsGLSL from '../visualization/shaders/vs_phong.glsl?raw';
+import fsGLSL from '../visualization/shaders/fs_phong.glsl?raw';
 
-uniform mat4 u_matrix;
-uniform vec4 u_color;
-
-out vec4 v_color;
-
-void main() {
-  gl_Position = u_matrix * a_position;
-  v_color = u_color;
-}
-`;
-
-// Define the fragment shader code, using GLSL 3.00
-const fsGLSL = `#version 300 es
-precision highp float;
-
-in vec4 v_color;
-
-out vec4 outColor;
-
-void main() {
-  outColor = v_color;
-}
-`;
+const settings = {
+  // Speed in degrees
+  rotationSpeed: {
+      x: 0,
+      y: 30,
+      z: 0,
+  },
+  cameraPosition: {
+      x: 0,
+      y: 0,
+      z: 10,
+  },
+  lightPosition: {
+      x: 10,
+      y: 10,
+      z: 10,
+  },
+  ambientColor: [0.5, 0.5, 0.5, 1.0],
+  diffuseColor: [0.5, 0.5, 0.5, 1.0],
+  specularColor: [0.5, 0.5, 0.5, 1.0],
+};
 
 // Define the Object3D class to represent 3D objects
 class Object3D {
@@ -46,7 +44,7 @@ class Object3D {
 }
 
 class Car {
-  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.12, 0.12 , 0.09], color = [0.5, 0, 0.5, 1]){
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.18, 0.18 , 0.09], color = [0.5, 0, 0.5, 1]){
     this.id = id;
     this.position = position;
     this.rotation = rotation;
@@ -255,7 +253,7 @@ async function getTrafficLights() {
             i.id,
             [i.x, i.y, i.z],
             [0, 0, 0],
-            [0.5, 0.5, 0.5],
+            [0.35, 0.35, 0.35],
             i.state ? [0, 1, 0, 1] : [1, 0, 0, 1], // Green if true, red if false
           );
           traffic_lights.push(newLight);
@@ -390,6 +388,16 @@ async function drawScene() {
     // Set up the view-projection matrix
     const viewProjectionMatrix = setupWorldView(gl);
 
+    let v3_lightPosition = {x: 10, y: 10, z: 10}; 
+
+    const globalUniforms = {
+      u_ambientLight: [0.2, 0.2, 0.2],
+      u_diffuseLight: [1, 1, 1],
+      u_specularLight: [1, 1, 1],
+      u_viewWorldPosition: [cameraPosition.x, cameraPosition.y, cameraPosition.z],
+      u_lightWorldPosition: [v3_lightPosition.x, v3_lightPosition.y, v3_lightPosition.z],
+    }
+    twgl.setUniforms(programInfo, globalUniforms);
 
     // Draw the agents
     draw(cars, carsVao, carsBufferInfo, viewProjectionMatrix)    
@@ -435,18 +443,25 @@ function draw(arrays, vao, bufferInfo, viewProjectionMatrix){
       const object_scale = twgl.v3.create(...object.scale);
 
       // Calculate the agent's matrix
-      object.matrix = twgl.m4.translate(viewProjectionMatrix, object_trans);
+      object.matrix = twgl.m4.translate(twgl.m4.identity(), object_trans);
       object.matrix = twgl.m4.rotateX(object.matrix, object.rotation[0]);
       object.matrix = twgl.m4.rotateY(object.matrix, object.rotation[1]);
       object.matrix = twgl.m4.rotateZ(object.matrix, object.rotation[2]);
       object.matrix = twgl.m4.scale(object.matrix, object_scale);
 
+      const modelViewProjectionMatrix = twgl.m4.multiply(viewProjectionMatrix, object.matrix);
+
 
       // Set the uniforms for the agent
       let uniforms = {
-          u_matrix: object.matrix,
-          u_color: object.color,
+          u_world: object.matrix,
+          u_worldViewProjection: modelViewProjectionMatrix,
+          u_diffuseColor: object.color,
+          u_specularColor: object.color,
+          u_ambientColor: object.color,
+          u_shininess: 100,
       }
+
 
       // Set the uniforms and draw the agent
       twgl.setUniforms(programInfo, uniforms);
