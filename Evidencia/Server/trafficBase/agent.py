@@ -155,14 +155,28 @@ class Car(Agent):
             
 
     def Enter_destination(self):
+        Posible_1=None
+        Posible_2=None
+        
+        if self.vision=="Left" or self.vision=="Right":
+            Posible_1=(self.Directions["Up"][0]+self.pos[0],self.Directions["Up"][1]+self.pos[1]) 
+            Posible_2=(self.Directions["Down"][0]+self.pos[0],self.Directions["Down"][1]+self.pos[1])
+        elif self.vision=="Up" or self.vision=="Down":
+            Posible_1=(self.Directions["Left"][0]+self.pos[0],self.Directions["Left"][1]+self.pos[1]) 
+            Posible_2=(self.Directions["Right"][0]+self.pos[0],self.Directions["Right"][1]+self.pos[1])
+            
+        sides=[Posible_1,Posible_2]
+        
         for neighbor in self.model.grid.iter_neighbors(self.pos, moore=True, include_center=False):
-            if isinstance(neighbor, Destination):
+            if isinstance(neighbor, Destination) :
                 if len(self.model.grid.get_cell_list_contents(neighbor.pos))==1:
                     
-                    if neighbor.identifier=="$" and self.Destination_pos==True:
+                    if (neighbor.identifier=="$" and self.Destination_pos==True) and (neighbor.pos in sides):
                         self.model.grid.move_agent(self, neighbor.pos)
                         self.state="Final"
                         break
+                    
+                    
                     
                     elif neighbor.identifier==self.Destination:
                         
@@ -185,7 +199,10 @@ class Car(Agent):
                 if self.can_move(self,place):
                     self.vision=place.direction
                     break
-                
+            elif isinstance(place, Destination) and place.identifier==self.Destination:
+                self.state="In Destination" 
+                self.Destination_pos=True
+                break   
 
 
     def step(self):
@@ -208,9 +225,7 @@ class Car(Agent):
             self.model.schedule.remove(self)
             self.model.grid.remove_agent(self)
             return
-        elif self.state=="In Destination":
-            self.Enter_destination()
-            return
+        
         
 class Traffic_Light(Agent):
     """
