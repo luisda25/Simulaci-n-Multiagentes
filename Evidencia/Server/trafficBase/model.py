@@ -43,8 +43,11 @@ class CityModel(Model):
                         self.grid.place_agent(agent, (c, self.height - r - 1))
                     
                     elif col in ["S", "s"]:
+                        agent1 = Road(f"r_{r*self.width+c}", self, "Same", "straight")
                         agent = Traffic_Light(f"tl_{r*self.width+c}", self, False if col == "S" else True, int(dataDictionary[col]))
+                        self.grid.place_agent(agent1, (c, self.height - r - 1))
                         self.grid.place_agent(agent, (c, self.height - r - 1))
+                        
                         self.schedule.add(agent)
                         self.traffic_lights.append(agent)
 
