@@ -93,7 +93,7 @@ class CityModel(Model):
     def step(self):
         '''Advance the model by one step.'''
         #Spawneamos carros cada 2 pasos
-        if self.step_counter % 2 == 0:
+        if self.step_counter % 7 == 0:
             self.spawn_cars()
         
         self.schedule.step()
