@@ -1,15 +1,22 @@
+/*
+* City Traffic Visualization from mesa using WebGL
+* Authors: Luis Daniel Filorio Luna, Jose Antonio Gonzalez Martinez
+* 28/11/2024
+*/
+
 'use strict';
 
 import * as twgl from 'twgl.js';
 import GUI from 'lil-gui';
-import obj from '../visualization/coche.obj?raw';
-import { loadObj } from '../visualization/OBJ_reader.js';
+import obj from '../visualization/coche.obj?raw'; // import the obj file
+import { loadObj } from '../visualization/OBJ_reader.js'; // import the loadObj function
 import { v3 } from '../visualization/libs/3D_lib';
 
-// Import the vertex shader code, using GLSL 3.00
+// Import shader codes, using GLSL 3.00
 import vsGLSL from '../visualization/shaders/vs_phong.glsl?raw';
 import fsGLSL from '../visualization/shaders/fs_phong.glsl?raw';
 
+// Define the settings for the visualization
 const settings = {
   
   cameraPosition: {
@@ -40,6 +47,7 @@ class Object3D {
   }
 }
 
+// Define the Car class to represent agents
 class Car {
   constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.0000001, 0.0000001 , 0.000001], color = [1,1,1,1], shininess = 100){
     this.id = id;
@@ -101,14 +109,15 @@ async function main() {
   // Create the program information using the vertex and fragment shaders
   programInfo = twgl.createProgramInfo(gl, [vsGLSL, fsGLSL]);
 
-  // Generate the agent and obstacle data
-  carsArrays = loadObj(obj);
+  // Generate object arrays
+  carsArrays = loadObj(obj); // Loads arrays from the obj file
+  console.log(carsArrays);
   obstacleArrays = generateData(1);
   trafficLightsArrays = generateData(1);
   destinationsArrays = generateData(1);
   roadsArrays = generateData(1);
 
-  // Create buffer information from the agent and obstacle data
+  // Create buffer information from the objects data
   carsBufferInfo = twgl.createBufferInfoFromArrays(gl, carsArrays);
   obstaclesBufferInfo = twgl.createBufferInfoFromArrays(gl, obstacleArrays);
   trafficLightsBufferInfo = twgl.createBufferInfoFromArrays(gl, trafficLightsArrays);
@@ -165,7 +174,7 @@ async function initAgentsModel() {
 }
 
 /*
- * Retrieves the current positions of all agents from the agent server.
+ * Retrieves the current positions of all car agents from the server.
  */
 async function getAgents() {
   try {
@@ -232,7 +241,7 @@ async function getObstacles() {
 
       // Create new obstacles and add them to the obstacles array
       for (const obstacle of result.positions) {
-        const newObstacle = new Object3D(obstacle.id, [obstacle.x, obstacle.y, obstacle.z])
+        const newObstacle = new Object3D(obstacle.id, [obstacle.x, obstacle.y, obstacle.z], [0,0,0], [1,1,1], [0.0, 0.5, 0.8, 1.0])
         obstacles.push(newObstacle)
       }
       // Log the obstacles array
@@ -632,6 +641,47 @@ function generateData(size) {
                  -0.5,  0.5, -0.5
                 ].map(e => size * e)
             },
+
+            a_normal: {
+              numComponents: 3,
+              data: [
+                  // Front Face
+                  0, 0, 1,
+                  0, 0, 1,
+                  0, 0, 1,
+                  0, 0, 1,
+  
+                  // Back face
+                  0, 0, -1,
+                  0, 0, -1,
+                  0, 0, -1,
+                  0, 0, -1,
+  
+                  // Top face
+                  0, 1, 0,
+                  0, 1, 0,
+                  0, 1, 0,
+                  0, 1, 0,
+  
+                  // Bottom face
+                  0, -1, 0,
+                  0, -1, 0,
+                  0, -1, 0,
+                  0, -1, 0,
+  
+                  // Right face
+                  1, 0, 0,
+                  1, 0, 0,
+                  1, 0, 0,
+                  1, 0, 0,
+  
+                  // Left face
+                  -1, 0, 0,
+                  -1, 0, 0,
+                  -1, 0, 0,
+                  -1, 0, 0,
+              ]
+          },
         a_color: {
                 numComponents: 4,
                 data: [
