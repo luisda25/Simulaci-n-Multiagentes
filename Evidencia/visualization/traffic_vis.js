@@ -254,6 +254,9 @@ async function getObstacles() {
   }
 }
 
+/*
+ * Retrieves the current positions of all traffic lights from the server and updates their color.
+ */
 async function getTrafficLights() {
   try {
     // Send a GET request to the agent server to retrieve the traffic light positions
@@ -307,13 +310,20 @@ async function getTrafficLights() {
   }
 }
 
+/*
+ * Retrieves the current positions of all roads from the server.
+ */
 async function getRoads() {
   try {
+    // Send a GET request to the agent server to retrieve the road positions
     let response = await fetch(agent_server_uri + "getRoads");
 
+    // Check if the response was successful
     if (response.ok) {
+      // Parse the response as JSON
       let result = await response.json();
 
+      // Create new roads and add them to the roads array
       for (const r of result.positions) {
         const newRoad = new Object3D(
           r.id, 
@@ -331,14 +341,22 @@ async function getRoads() {
   }
 }
 
+/*
+ * Retrieves the current positions of all destinations from the server.
+ */
 async function getDestinations() {
   try {
+    // Send a GET request to the agent server to retrieve the destination positions
     let response = await fetch(agent_server_uri + "getDestinations");
 
+    // Check if the response was successful
     if (response.ok) {
+      // Parse the response as JSON
       let result = await response.json();
 
+      // Create new destinations and add them to the destinations array
       for (const d of result.positions) {
+        // if the destination is an inner destination, it will be blue, else the color as a road
         if (d.type == "Inner_destination") {
           const newDestination = new Object3D(
             d.id,
@@ -448,7 +466,7 @@ async function drawScene() {
 }
 
 /*
- * Draws the agents.
+ * Draws the objects.
  * 
  * @param {Number} distance - The distance for rendering.
  * @param {WebGLVertexArrayObject} agentsVao - The vertex array object for agents.
@@ -583,21 +601,26 @@ function setupUI() {
             settings.lightPosition.z = value
         });
 
+    // Create a folder for the colors
     const colorFolder = gui.addFolder('Colors:')
     colorFolder.addColor(settings, 'ambientColor')
         .onChange( value => {
+            // Update the ambient color when the color value changes
             settings.ambientColor = value
         });
     colorFolder.addColor(settings, 'diffuseColor')
         .onChange( value => {
+            // Update the diffuse color when the color value changes
             settings.diffuseColor = value
         });
     colorFolder.addColor(settings, 'specularColor')
         .onChange( value => {
+            // Update the specular color when the color value
             settings.specularColor = value
         });
 }
 
+// Generate the data for the cube
 function generateData(size) {
     let arrays =
     {
