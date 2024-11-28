@@ -118,7 +118,8 @@ class Car(Agent):
                     self.state="In Destination"
                     break
                 elif isinstance(place, Road) and len(self.model.grid.get_cell_list_contents(place.pos))==1:
-                    self.posible_moves.append(place)
+                    if self.can_move(self.model.grid.get_cell_list_contents(Front_pos)[0],place):
+                        self.posible_moves.append(place)
                     
        
         for front in self.model.grid.get_cell_list_contents(Front_pos):
