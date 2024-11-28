@@ -4,59 +4,51 @@ import * as twgl from 'twgl.js';
 import GUI from 'lil-gui';
 import obj from '../visualization/coche.obj?raw';
 import { loadObj } from '../visualization/OBJ_reader.js';
+import { v3 } from '../visualization/libs/3D_lib';
 
 // Import the vertex shader code, using GLSL 3.00
-const vsGLSL = `#version 300 es
-in vec4 a_position;
+import vsGLSL from '../visualization/shaders/vs_phong.glsl?raw';
+import fsGLSL from '../visualization/shaders/fs_phong.glsl?raw';
 
-uniform mat4 u_matrix;
-uniform vec4 u_color;
-
-out vec4 v_color;
-
-void main() {
-  gl_Position = u_matrix * a_position;
-  v_color = u_color;
-}
-`;
-
-// Define the fragment shader code, using GLSL 3.00
-const fsGLSL = `#version 300 es
-precision highp float;
-
-in vec4 v_color;
-
-out vec4 outColor;
-
-void main() {
-  outColor = v_color;
-}
-`;
+const settings = {
+  
+  cameraPosition: {
+      x: 0,
+      y: 0,
+      z: 10,
+  },
+  lightPosition: {
+      x: 10,
+      y: 10,
+      z: 10,
+  },
+  ambientColor: [0.5, 0.5, 0.5, 1.0],
+  diffuseColor: [0.5, 0.5, 0.5, 1.0],
+  specularColor: [0.5, 0.5, 0.5, 1.0],
+};
 
 // Define the Object3D class to represent 3D objects
 class Object3D {
-  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[1,1,1], color = [1, 1, 1, 1]){
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[1,1,1], color = [1,1,1,1], shininess = 100){
     this.id = id;
     this.position = position;
     this.rotation = rotation;
     this.scale = scale;
     this.color = color;
+    this.shininess = shininess;
     this.matrix = twgl.m4.create();
   }
 }
 
 class Car {
-  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.12, 0.12 , 0.09], color = null){
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.0000001, 0.0000001 , 0.000001], color = [1,1,1,1], shininess = 100){
     this.id = id;
     this.position = position;
     this.rotation = rotation;
     this.scale = scale;
-    this.color = color || this.getRandomColor();
+    this.color = color;
+    this.shininess = shininess;
     this.matrix = twgl.m4.create();
-  }
-
-  getRandomColor() {
-    return [Math.random(), Math.random(), Math.random(), 1];
   }
 }
 
@@ -179,6 +171,7 @@ async function getAgents() {
   try {
     // Send a GET request to the agent server to retrieve the agent positions
     let response = await fetch(agent_server_uri + "getAgents") 
+    let rotation = [0, 0, 0];
 
     // Check if the response was successful
     if(response.ok){
@@ -193,7 +186,25 @@ async function getAgents() {
 
       // Create new agents and add them to the agents array
       for (const agent of result.positions) {
-        const newAgent = new Car(agent.id, [agent.x, agent.y, agent.z])
+        if (agent.vision == "Up") {
+          rotation = [0, 0, 0];
+        } else if (agent.vision == "Down") {
+          rotation = [0, Math.PI, 0];
+        } else if (agent.vision == "Left") {
+          rotation = [0, -Math.PI / 2, 0];
+        } else if (agent.vision == "Right") {
+          rotation = [0, Math.PI / 2, 0];
+        } else {
+          rotation = [0, 0, 0];
+        }
+
+        const newAgent = new Car(
+          agent.id, 
+          [agent.x, agent.y, agent.z],
+          rotation,
+          [0.12, 0.12 , 0.09],
+          [0.5, 0, 0.5, 1],
+        )
         cars.push(newAgent)
       }
       // Log the agents array
@@ -251,12 +262,13 @@ async function getTrafficLights() {
       if (traffic_lights.length == 0) {
         // Create new traffic lights and add them to the trafficLights array
         for (const i of result.positions) {
+          const color = i.state ? [0, 1, 0, 1] : [1, 0, 0, 1]; // Green if true, red if false
           const newLight = new Object3D(
             i.id,
             [i.x, i.y, i.z],
             [0, 0, 0],
-            [0.5, 0.5, 0.5],
-            i.state ? [0, 1, 0, 1] : [1, 0, 0, 1], // Green if true, red if false
+            [0.35, 0.35, 0.35],
+            color,
           );
           traffic_lights.push(newLight);
         }
@@ -266,6 +278,7 @@ async function getTrafficLights() {
       } else {
         // Update the positions and states of existing traffic lights
         for (const i of result.positions) {
+          const color = i.state ? [0, 1, 0, 1] : [1, 0, 0, 1]; // Green if true, red if false
           const currentTrafficLight = traffic_lights.find(
             (object3d) => object3d.id == i.id,
           );
@@ -274,7 +287,7 @@ async function getTrafficLights() {
           if (currentTrafficLight != undefined) {
             // Update the traffic light's state and color
             currentTrafficLight.state = i.state;
-            currentTrafficLight.color = i.state ? [0, 1, 0, 1] : [1, 0, 0, 1]; // Green if true, red if false
+            currentTrafficLight.color = color; // Green if true, red if false
           }
         }
       }
@@ -387,9 +400,19 @@ async function drawScene() {
     // Use the program
     gl.useProgram(programInfo.program);
 
+    let v3_lightPosition = v3.create(settings.lightPosition.x, settings.lightPosition.y, settings.lightPosition.z);
+    let v3_cameraPosition = v3.create(settings.cameraPosition.x, settings.cameraPosition.y, settings.cameraPosition.z);
+
+    const globalUniforms = {
+      u_ambientLight: settings.ambientColor,
+      u_diffuseLight: settings.diffuseColor,
+      u_specularLight: settings.specularColor,
+      u_viewWorldPosition: v3_cameraPosition,
+      u_lightWorldPosition: v3_lightPosition,
+    }
+    twgl.setUniforms(programInfo, globalUniforms);
     // Set up the view-projection matrix
     const viewProjectionMatrix = setupWorldView(gl);
-
 
     // Draw the agents
     draw(cars, carsVao, carsBufferInfo, viewProjectionMatrix)    
@@ -431,22 +454,29 @@ function draw(arrays, vao, bufferInfo, viewProjectionMatrix){
     for(const object of arrays){
 
       // Create the agent's transformation matrix
-      const object_trans = twgl.v3.create(...object.position);
-      const object_scale = twgl.v3.create(...object.scale);
+      const object_trans = v3.create(...object.position);
+      const object_scale = v3.create(...object.scale);
 
       // Calculate the agent's matrix
-      object.matrix = twgl.m4.translate(viewProjectionMatrix, object_trans);
+      object.matrix = twgl.m4.translate(twgl.m4.identity(), object_trans);
       object.matrix = twgl.m4.rotateX(object.matrix, object.rotation[0]);
       object.matrix = twgl.m4.rotateY(object.matrix, object.rotation[1]);
       object.matrix = twgl.m4.rotateZ(object.matrix, object.rotation[2]);
       object.matrix = twgl.m4.scale(object.matrix, object_scale);
 
+      const modelViewProjectionMatrix = twgl.m4.multiply(viewProjectionMatrix, object.matrix);
+
 
       // Set the uniforms for the agent
       let uniforms = {
-          u_matrix: object.matrix,
-          u_color: object.color,
+          u_world: object.matrix,
+          u_worldViewProjection: modelViewProjectionMatrix,
+          u_diffuseColor: object.color,
+          u_specularColor: object.color,
+          u_ambientColor: object.color,
+          u_shininess: object.shininess,
       }
+
 
       // Set the uniforms and draw the agent
       twgl.setUniforms(programInfo, uniforms);
@@ -524,6 +554,38 @@ function setupUI() {
         .onChange( value => {
             // Update the camera position when the slider value changes
             cameraPosition.z = value
+        });
+
+    // Create a folder for the light position
+    const lightFolder = gui.addFolder('Light Position:')
+    lightFolder.add(settings.lightPosition, 'x', -50, 50)
+        .onChange( value => {
+            // Update the light position when the slider value changes
+            settings.lightPosition.x = value
+        });
+    lightFolder.add(settings.lightPosition, 'y', -50, 50)
+        .onChange( value => {
+            // Update the light position when the slider value changes
+            settings.lightPosition.y = value
+        });
+    lightFolder.add(settings.lightPosition, 'z', -50, 50)
+        .onChange( value => {
+            // Update the light position when the slider value changes
+            settings.lightPosition.z = value
+        });
+
+    const colorFolder = gui.addFolder('Colors:')
+    colorFolder.addColor(settings, 'ambientColor')
+        .onChange( value => {
+            settings.ambientColor = value
+        });
+    colorFolder.addColor(settings, 'diffuseColor')
+        .onChange( value => {
+            settings.diffuseColor = value
+        });
+    colorFolder.addColor(settings, 'specularColor')
+        .onChange( value => {
+            settings.specularColor = value
         });
 }
 

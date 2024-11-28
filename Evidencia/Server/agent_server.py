@@ -57,7 +57,7 @@ def getAgents():
         # The y coordinate is set to 1, since the agents are in a 3D world. The z coordinate corresponds to the row (y coordinate) of the grid in mesa.
         try:
             carPositions = [
-                {"id": str(a.unique_id), "x": a.pos[0], "y":1, "z":a.pos[1]}
+                {"id": str(a.unique_id), "x": a.pos[0], "y":1, "z":a.pos[1], "vision": a.vision}
                 for a in cityModel.schedule.agents if isinstance(a, Car)
             ]
 
