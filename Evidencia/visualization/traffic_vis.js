@@ -33,28 +33,30 @@ const settings = {
 
 // Define the Object3D class to represent 3D objects
 class Object3D {
-  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[1,1,1], color = [1, 1, 1, 1]){
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[1,1,1], ambientColor = [0.2, 0.2, 0.2, 1], diffuseColor = [0.8, 0.8, 0.8, 1], specularColor = [1.0, 1.0, 1.0, 1], shininess = 100){
     this.id = id;
     this.position = position;
     this.rotation = rotation;
     this.scale = scale;
-    this.color = color;
+    this.ambientColor = ambientColor;
+    this.diffuseColor = diffuseColor;
+    this.specularColor = specularColor;
+    this.shininess = shininess;
     this.matrix = twgl.m4.create();
   }
 }
 
 class Car {
-  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.18, 0.18 , 0.09], color = [0.5, 0, 0.5, 1]){
+  constructor(id, position=[0,0,0], rotation=[0,0,0], scale=[0.18, 0.18 , 0.09], ambientColor = [0.1, 0.1, 0.1, 1], diffuseColor = [0.7, 0.3, 0.85, 1], specularColor = [1.0, 1.0, 1.0, 1], shininess = 100){
     this.id = id;
     this.position = position;
     this.rotation = rotation;
     this.scale = scale;
-    this.color = color || this.getRandomColor();
+    this.ambientColor = ambientColor;
+    this.diffuseColor = diffuseColor;
+    this.specularColor = specularColor;
+    this.shininess = shininess;
     this.matrix = twgl.m4.create();
-  }
-
-  getRandomColor() {
-    return [Math.random(), Math.random(), Math.random(), 1];
   }
 }
 
@@ -388,14 +390,13 @@ async function drawScene() {
     // Set up the view-projection matrix
     const viewProjectionMatrix = setupWorldView(gl);
 
-    let v3_lightPosition = {x: 10, y: 10, z: 10}; 
 
     const globalUniforms = {
       u_ambientLight: [0.2, 0.2, 0.2],
       u_diffuseLight: [1, 1, 1],
       u_specularLight: [1, 1, 1],
-      u_viewWorldPosition: [cameraPosition.x, cameraPosition.y, cameraPosition.z],
-      u_lightWorldPosition: [v3_lightPosition.x, v3_lightPosition.y, v3_lightPosition.z],
+      u_viewWorldPosition: [settings.cameraPosition.x + 28/2, settings.cameraPosition.y, settings.cameraPosition.z+28/2],
+      u_lightWorldPosition: [settings.lightPosition.x, settings.lightPosition.y, settings.lightPosition.z],
     }
     twgl.setUniforms(programInfo, globalUniforms);
 
@@ -456,10 +457,10 @@ function draw(arrays, vao, bufferInfo, viewProjectionMatrix){
       let uniforms = {
           u_world: object.matrix,
           u_worldViewProjection: modelViewProjectionMatrix,
-          u_diffuseColor: object.color,
-          u_specularColor: object.color,
-          u_ambientColor: object.color,
-          u_shininess: 100,
+          u_diffuseColor: object.ambientColor,
+          u_specularColor: object.specularColor,
+          u_ambientColor: object.ambientColor,
+          u_shininess: object.shininess,
       }
 
 
