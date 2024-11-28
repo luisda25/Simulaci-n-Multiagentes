@@ -13,14 +13,16 @@ class CityModel(Model):
     """
     def __init__(self, N):
 
-        # Load the map dictionary. The dictionary maps the characters in the map file to the corresponding agent.
+        #Obtenemos el diccionario de los datos de los agentes
         dataDictionary = json.load(open("city_files/mapDictionary.json"))
 
         self.traffic_lights = []
         self.Destinations_list = []
         self.step_counter = 0
+        self.Active_agents = 0
+        self.Destination_reached=0
         
-        # Load the map file. The map file is a text file where each character represents an agent.
+        #Obtenemos el mapa de la ciudad
         with open('city_files/Mapa_Final.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0])-1
@@ -30,18 +32,21 @@ class CityModel(Model):
             self.grid = MultiGrid(self.width, self.height, torus = False) 
             self.schedule = RandomActivation(self)
 
-            # Goes through each character in the map file and creates the corresponding agent.
+            #Leemos el mapa y creamos los agentes
             for r, row in enumerate(lines):
                 for c, col in enumerate(row):
+                    #Se crean los agentes de calle 
                     if col in ["V", "^", ">", "<","="]:
                         agent = Road(f"r_{r*self.width+c}", self, dataDictionary[col], "straight")
                         self.grid.place_agent(agent, (c, self.height - r - 1))
 
+                    #Se ponene los agentes de interseccion como calles con tipo intersección
                     elif col in self.Nodes:
                         
                         agent = Road(f"r_{r*self.width+c}", self, col, "intersection")
                         self.grid.place_agent(agent, (c, self.height - r - 1))
                     
+                    #Se crean los agentes de semaforo junto con calles debajo para la simulación 3d
                     elif col in ["S", "s"]:
                         agent1 = Road(f"r_{r*self.width+c}", self, "Same", "straight")
                         agent = Traffic_Light(f"tl_{r*self.width+c}", self, False if col == "S" else True, int(dataDictionary[col]))
@@ -50,15 +55,17 @@ class CityModel(Model):
                         
                         self.schedule.add(agent)
                         self.traffic_lights.append(agent)
-
+                        
+                    #Agentes de edificios
                     elif col == "#":
                         agent = Obstacle(f"ob_{r*self.width+c}", self)
                         self.grid.place_agent(agent, (c, self.height - r - 1))
-
+                    #Agentes de destino
                     elif col == "$":
                         agent = Destination(f"d_{r*self.width+c}", self, "Inner_destination", col)
                         self.grid.place_agent(agent, (c, self.height - r - 1))
                     
+                    #Los destinos de la calle
                     elif col in self.destinations_nodes:
                         agent = Destination(f"d_{r*self.width+c}", self, "Road_destination", col)
                         self.grid.place_agent(agent, (c, self.height - r - 1))
@@ -66,22 +73,27 @@ class CityModel(Model):
           
         self.running = True                 
         
-        
+    #Sapwneamos 4 carros, uno en cada esquina, si no hay un carro en la esquina    
     def spawn_cars(self):  
         poosibleSpawns = [(0, 0), (0, self.height-1), (self.width-1, 0), (self.width-1, self.height-1)]  
         for i in range(4):
             location =poosibleSpawns[i]
-            direction = self.grid.get_cell_list_contents(location)[0].direction  
-            agentCar = Car(f"c_{i}", self, self.random.choice(self.Destinations_list), direction)
-            self.grid.place_agent(agentCar, location)
-            self.schedule.add(agentCar)
+            if len(self.grid.get_cell_list_contents(location))>1:
+                continue
+            else:
+                direction = self.grid.get_cell_list_contents(location)[0].direction  
+                agentCar = Car(f"c_{i}", self, self.random.choice(self.Destinations_list), direction)
+                self.grid.place_agent(agentCar, location)
+                self.schedule.add(agentCar)
+                self.Active_agents += 1
         
         
         
 
     def step(self):
         '''Advance the model by one step.'''
-        if self.step_counter % 10 == 0:
+        #Spawneamos carros cada 2 pasos
+        if self.step_counter % 2 == 0:
             self.spawn_cars()
         
         self.schedule.step()
