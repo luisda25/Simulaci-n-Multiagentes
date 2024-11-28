@@ -25,7 +25,7 @@ void main() {
     // Normalize the vectors
     vec3 normalVector = normalize(v_normal);
     vec3 lightVector = normalize(v_lightDirection);
-    float lambert = dot(normalVector, lightVector);
+    float lambert = max(dot(normalVector, lightVector), 0.0);
     vec4 diffuse = vec4(0,0,0,1);
 
     if (lambert > 0.0){
