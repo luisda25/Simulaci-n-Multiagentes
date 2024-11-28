@@ -10,12 +10,7 @@ import vsGLSL from '../visualization/shaders/vs_phong.glsl?raw';
 import fsGLSL from '../visualization/shaders/fs_phong.glsl?raw';
 
 const settings = {
-  // Speed in degrees
-  rotationSpeed: {
-      x: 0,
-      y: 30,
-      z: 0,
-  },
+  
   cameraPosition: {
       x: 0,
       y: 0,
@@ -193,7 +188,13 @@ async function getAgents() {
 
       // Create new agents and add them to the agents array
       for (const agent of result.positions) {
-        const newAgent = new Car(agent.id, [agent.x, agent.y, agent.z])
+        const newAgent = new Car(
+          agent.id, 
+          [agent.x, agent.y, agent.z],
+          [0, 0, 0],
+          [0.18, 0.18 , 0.09],
+          [0.5, 0, 0.5, 1],
+        )
         cars.push(newAgent)
       }
       // Log the agents array
@@ -274,7 +275,7 @@ async function getTrafficLights() {
           if (currentTrafficLight != undefined) {
             // Update the traffic light's state and color
             currentTrafficLight.state = i.state;
-            currentTrafficLight.color = i.state ? [0, 1, 0, 1] : [1, 0, 0, 1]; // Green if true, red if false
+            currentTrafficLight.ambientColor = i.state ? [0, 1, 0, 1] : [1, 0, 0, 1]; // Green if true, red if false
           }
         }
       }
@@ -392,9 +393,9 @@ async function drawScene() {
 
 
     const globalUniforms = {
-      u_ambientLight: [0.2, 0.2, 0.2],
-      u_diffuseLight: [1, 1, 1],
-      u_specularLight: [1, 1, 1],
+      u_ambientLight: settings.ambientColor,
+      u_diffuseLight: settings.diffuseColor,
+      u_specularLight: settings.specularColor,
       u_viewWorldPosition: [settings.cameraPosition.x + 28/2, settings.cameraPosition.y, settings.cameraPosition.z+28/2],
       u_lightWorldPosition: [settings.lightPosition.x, settings.lightPosition.y, settings.lightPosition.z],
     }

@@ -2,14 +2,15 @@
 precision highp float;
 
 in vec3 v_normal;
-in vec3 v_lightDirection;
 in vec3 v_cameraDirection;
+in vec3 v_lightDirection;
 
+// Light Uniforms
 uniform vec4 u_ambientLight;
 uniform vec4 u_diffuseLight;
 uniform vec4 u_specularLight;
 
-// Model uniforms
+// Material Uniforms
 uniform vec4 u_ambientColor;
 uniform vec4 u_diffuseColor;
 uniform vec4 u_specularColor;
@@ -18,31 +19,33 @@ uniform float u_shininess;
 out vec4 outColor;
 
 void main() {
-    // Ambient lighting component
     vec4 ambient = u_ambientLight * u_ambientColor;
 
-    // Diffuse light component
-    vec4 diffuse = vec4(0, 0, 0, 1);
-    vec3 v_n = normalize(v_normal);
-    vec3 v_l = normalize(v_lightDirection);
-    vec3 v_c = normalize(v_cameraDirection);
+    // Diffuse component
+    // Normalize the vectors
+    vec3 normalVector = normalize(v_normal);
+    vec3 lightVector = normalize(v_lightDirection);
+    float lambert = dot(normalVector, lightVector);
+    vec4 diffuse = vec4(0,0,0,1);
 
-    float lambert = dot(v_n, v_l);
-
-    if (lambert > 0.0) {
-        diffuse = u_diffuseLight * u_diffuseColor * lambert;
+    if (lambert > 0.0){
+        diffuse = u_diffuseColor * u_diffuseLight * lambert;
     }
-    // Specular light component
-    vec4 specular = vec4(0, 0, 0, 1);
-    vec3 v_par = v_n * dot(v_n, v_l);
-    vec3 v_per = v_n - v_par;
-    vec3 v_ref = v_par - v_per;
-    float spec = dot(v_c, v_ref);
 
-    if (spec > 0.0){
-        specular = u_specularLight * u_specularColor * pow(spec, u_shininess);
- 
+    // Specular color
+    vec3 v_parallel = normalVector * lambert;
+    vec3 v_perpendicular = lightVector - v_parallel;
+    vec3 v_reflect = v_parallel - v_perpendicular;
+    vec3 cameraVector = normalize(v_cameraDirection);
+
+    float something = pow(dot(cameraVector,v_reflect),u_shininess);
+
+    vec4 specular = vec4(0,0,0,1);
+
+    if(something > 0.0){
+        specular = u_specularColor * u_specularLight * something;
     }
+
 
     outColor = ambient + diffuse + specular;
 }
