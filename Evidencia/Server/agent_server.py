@@ -1,13 +1,13 @@
-# TC2008B. Sistemas Multiagentes y Gráficas Computacionales
-# Python flask server to interact with webGL.
-# Octavio Navarro. 2024
+# API server for city traffic simulation
+# Luis Daniel Filorio Luna
+# 28/11/2024
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from trafficBase.model import CityModel
 from trafficBase.agent import Car, Traffic_Light, Destination, Obstacle, Road
 
-# Size of the board:
+# Variables to store the parameters of the model
 number_cars = 10
 cityModel = None
 currentStep = 0
@@ -90,7 +90,7 @@ def getObstacles():
             print(e)
             return jsonify({"message":"Error with obstacle positions"}), 500
 
-
+# This route will be used to get the positions of the traffic lights
 @app.route('/getTrafficLights', methods=['GET'])
 @cross_origin()
 def getTrafficLights():
@@ -101,7 +101,7 @@ def getTrafficLights():
     
     if request.method == 'GET':
         try:
-        # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
+        # Get the positions of the traffic lights and return them to WebGL in JSON.json.t.
         # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
             trafficLigthPositions = [
                 {"id": str(a.unique_id), "x": x, "y": 2, "z": z, "state": a.state}
@@ -114,6 +114,7 @@ def getTrafficLights():
             print(e)
             return jsonify({"message":"Error with traffic light positions"}), 500
         
+# This route will be used to get the positions of the roads        
 @app.route('/getRoads', methods=['GET'])
 @cross_origin()
 def getRoads():
@@ -124,7 +125,7 @@ def getRoads():
     
     if request.method == 'GET':
         try:
-        # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
+        # Get the positions of the roads and return them to WebGL in JSON.json.t.
         # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
             roadPositions = [
                 {"id": str(a.unique_id), "x": x, "y": 0, "z": z}
@@ -137,7 +138,7 @@ def getRoads():
             print(e)
             return jsonify({"message":"Error with road positions"}), 500
         
-        
+# This route will be used to get the positions of the destinations        
 @app.route('/getDestinations', methods=['GET'])
 @cross_origin()
 def getDestinations():
@@ -148,7 +149,7 @@ def getDestinations():
     
     if request.method == 'GET':
         try:
-        # Get the positions of the obstacles and return them to WebGL in JSON.json.t.
+        # Get the positions of the destinations and return them to WebGL in JSON.json.t.
         # Same as before, the positions are sent as a list of dictionaries, where each dictionary has the id and position of an obstacle.
             destinationPositions = [
                 {"id": str(a.unique_id), "x": x, "y": 0, "z": z, "type": a.type}
