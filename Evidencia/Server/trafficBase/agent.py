@@ -1,3 +1,13 @@
+'''
+José Antonio González Martínez A01028517
+Luis Daniel Filorio Luna A01028418
+
+Codigo de modelado de agentes para la simulación de tráfico
+
+'''
+
+
+
 from mesa import Agent
 import json
 from collections import deque

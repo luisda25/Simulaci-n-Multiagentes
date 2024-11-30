@@ -1,6 +1,6 @@
 /*
 * City Traffic Visualization from mesa using WebGL
-* Authors: Luis Daniel Filorio Luna
+* Authors: Luis Daniel Filorio Luna ,José Antonio González Martínez 
 * 28/11/2024
 */
 

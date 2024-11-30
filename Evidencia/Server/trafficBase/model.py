@@ -1,8 +1,20 @@
+'''
+José Antonio González Martínez A01028517
+Luis Daniel Filorio Luna A01028418
+
+
+Modelo completo de la simulación de tráfico, 
+se encarga de crear el mapa de la ciudad 
+y de los agentes que la conforman.
+
+'''
+
 from mesa import Model
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from trafficBase.agent import *
 import json
+import requests
 
 class CityModel(Model):
     """ 
@@ -93,8 +105,30 @@ class CityModel(Model):
     def step(self):
         '''Advance the model by one step.'''
         #Spawneamos carros cada 2 pasos
-        if self.step_counter % 7 == 0:
+        if self.step_counter % 3 == 0:
             self.spawn_cars()
         
         self.schedule.step()
         self.step_counter += 1
+        
+        if self.step_counter % 10 == 0:
+            
+            url = "http://10.49.12.55:5000/api/"
+            endpoint = "attempt"
+
+            data = {
+                "year" : 2024,
+                "classroom" : 301,
+                "name" : "Luigi y Pepe ",
+                "current_cars": self.Active_agents,
+                "total_arrived": self.Destination_reached
+            }
+
+            headers = {
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(url+endpoint, data=json.dumps(data), headers=headers)
+
+            print("Request " + "successful" if response.status_code == 200 else "failed", "Status code:", response.status_code)
+            print("Response:", response.json())

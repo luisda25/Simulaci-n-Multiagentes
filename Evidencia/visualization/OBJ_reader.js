@@ -2,6 +2,7 @@
  * Function for reading OBJ files and saving them in a list of arrays (JSON)
  *
  * Luis Daniel Filorio Luna A01028418
+ * José Antonio González Martínez A01028517
  * 2024-11-15
  */
 

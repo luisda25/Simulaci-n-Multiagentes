@@ -1,6 +1,8 @@
 # API server for city traffic simulation
 # Luis Daniel Filorio Luna
+# José Antonio González Martínez A01028517
 # 28/11/2024
+
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
